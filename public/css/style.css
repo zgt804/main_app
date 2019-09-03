@@ -1,0 +1,28 @@
+body {
+    background: #fff;
+}
+.mar {
+    margin-top: 50px;
+}
+.toolbarMenu {
+    background-color: rgb(59, 59, 59);
+    height: 40px;
+}
+.gray {
+    color: #475466;
+}
+.black {
+    color: #475466;
+}
+.yellow {
+    color: #FF7400;
+}
+.green {
+    color: #00CC00;
+}
+.red {
+    color: #FF0000;
+}
+.blue {
+    color: #1826B0;
+}

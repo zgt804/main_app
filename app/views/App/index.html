@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TaskManager</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="./public/codebase/webix.css">
+    <script type="text/javascript" src="./public/codebase/webix.js"></script>
+    <script type="text/javascript" src="./public/js/toolbar.js"></script>
+    <script type="text/javascript" src="./public/js/project/models/ProjectModel.js"></script>
+    <script type="text/javascript" src="./public/js/project/newProjectButton.js"></script>
+    <script type="text/javascript" src="./public/js/project/editProjectButton.js"></script>
+    <script type="text/javascript" src="./public/js/project/deleteProjectButton.js"></script>
+    <script type="text/javascript" src="./public/js/project/searchProject.js"></script>
+    <script type="text/javascript" src="./public/js/project/filterProject.js"></script>
+    <script type="text/javascript" src="./public/js/project/projects.js"></script>
+    <script type="text/javascript" src="./public/js/project/newProjectPop.js"></script>
+    <script type="text/javascript" src="./public/js/project/editProjectPop.js"></script>
+    <script type="text/javascript" src="./public/js/task/models/TaskModel.js"></script>
+    <script type="text/javascript" src="./public/js/task/newTaskButton.js"></script>
+    <script type="text/javascript" src="./public/js/task/editTaskButton.js"></script>
+    <script type="text/javascript" src="./public/js/task/searchTask.js"></script>
+    <script type="text/javascript" src="./public/js/task/filterTask.js"></script>
+    <script type="text/javascript" src="./public/js/task/tasks.js"></script>
+    <script type="text/javascript" src="./public/js/task/newTaskPop.js"></script>
+    <script type="text/javascript" src="./public/js/task/editTaskPop.js"></script>
+    <script type="text/javascript" src="./public/js/employee/models/EmployeeModel.js"></script>
+    <script type="text/javascript" src="./public/js/treeRender.js"></script>
+    <link rel="stylesheet" type="text/css" href="./public/css/style.css">
+</head>
+<body>
+    <script>
+
+        let task = [];
+
+        let proj = [];
+
+        let newEmployees = [];
+
+        webix.ui({
+            rows:[
+                getToolbar(),
+                {
+                    cols:[
+                        {rows:[
+                            {
+                                cols: [
+                                    getNewProjectButton(),
+                                    getEditProjectButton(),
+                                    getDeleteProjectButton()
+                                ]
+                            },
+                            getSearchProject(),
+                            getFilterProject(),
+                            getProjects()
+                        ]},
+                        {rows:[
+                            {
+                                cols: [
+                                    getNewTaskButton(),
+                                    getEditTaskButton()
+                                ]
+                            },
+                            getSearchTask(),
+                            getFilterTask(),
+                            getTasks()
+                        ]},
+                    ]
+                }
+            ]
+        });
+
+        webix.ui(getEditProjectPop());
+
+        webix.ui(getNewProjectPop());
+
+        webix.ui(getNewTaskPop());
+
+        webix.ui(getEditTaskPopEdit());
+
+        webix.ui(getEditTaskPopConfirm());
+
+
+        let projectList = $$('projects');
+        let taskTree = $$('tasks');
+        let newTaskButton = $$('newTaskButton');
+        let editTaskButton = $$('editTaskButton');
+        let deleteTaskButton = $$('deleteTaskButton');
+        let newProjectButton = $$('newProjectButton');
+        let editProjectButton = $$('editProjectButton');
+        let deleteProjectButton = $$('deleteProjectButton');
+        let newTaskInputHiddenProject = $$('newTaskPopParentProject');
+        let newTaskInputHiddenTask = $$('newTaskPopParentTask');
+        let newTaskPop = $$('newTaskPop');
+        let newProjectPop = $$('newProjectPop');
+        let editTaskPopEdit = $$('editTaskPopEdit');
+        let editTaskPopConfirm = $$('editTaskPopConfirm');
+        let editProjectPop = $$('editProjectPop');
+
+
+        requestProjects();
+        requestEmployees();
+
+
+        projectList.attachEvent("onItemClick", function(id) {
+            newTaskInputHiddenTask['value'] = 0;
+            newTaskInputHiddenProject['value'] = id;
+            let projectListItem = this.getItem(id);
+            editTaskButton.disable();
+            newTaskButton.enable();
+            editProjectButton.enable();
+            deleteProjectButton.enable();
+            buildProjectTree(projectListItem.id);
+        });
+
+        taskTree.attachEvent("onItemClick", function(id) {
+            taskTree.select(id);
+            newTaskInputHiddenTask['value'] = id;
+            editTaskButton.enable();
+        });
+
+
+        $$('newTaskPopButton').attachEvent("onItemClick", function() {
+            newTaskPop.hide();
+        });
+
+        $$('newProjectPopButton').attachEvent("onItemClick", function() {
+            newProjectPop.hide();
+        });
+
+        $$('editProjectPopButton').attachEvent("onItemClick", function() {
+            editProjectPop.hide();
+        });
+
+        $$('editTaskEdit').attachEvent("onItemClick", function() {
+            editTaskPopEdit.hide();
+        });
+
+        $$('editTaskCompletion').attachEvent("onItemClick", function() {
+            editTaskPopEdit.hide();
+        });
+
+        $$('editTaskConfirm').attachEvent("onItemClick", function() {
+            editTaskPopConfirm.hide();
+        });
+
+        $$('editTaskDecline').attachEvent("onItemClick", function() {
+            editTaskPopConfirm.hide();
+        });
+
+        $$('editTaskButton').attachEvent("onItemClick", function() {
+            let taskItem = taskTree.getSelectedItem();
+            let authorId = newEmployees.map(function(x) {return x.id;}).indexOf(taskItem.author_id);
+            if(taskItem.state == 2 && taskItem.employee_id == 1) {
+                editTaskPopConfirm.show();
+                $$('editTaskNameC').setValue(taskItem.name);
+                $$('editTaskTextC').setValue(taskItem.description);
+                $$('editTaskAuthorC').setValue(newEmployees[authorId].value);
+                $$('editTaskEmployeeC').setValue(taskItem.employee_id);
+                $$('editTaskCreateDateC').setValue(taskItem.create_date);
+                $$('editTaskFinishDateC').setValue(taskItem.finish_date);
+                $$('editTaskPriorityC').setValue(taskItem.priority);
+                $$('editTaskCompletion').disable();
+            }
+            else if(taskItem.state == 3 && taskItem.employee_id == 1) {
+                editTaskPopEdit.show();
+                $$('editTaskName').setValue(taskItem.name);
+                $$('editTaskText').setValue(taskItem.description);
+                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
+                $$('editTaskEmployee').setValue(taskItem.employee_id);
+                $$('editTaskCreateDate').setValue(taskItem.create_date);
+                $$('editTaskFinishDate').setValue(taskItem.finish_date);
+                $$('editTaskPriority').setValue(taskItem.priority);
+                $$('editTaskCompletion').enable();
+                $$('editTaskCompletion').show();
+                $$('editTaskEdit').show();
+            }
+            else if(taskItem.state == 4) {
+                editTaskPopEdit.show();
+                $$('editTaskName').setValue(taskItem.name);
+                $$('editTaskText').setValue(taskItem.description);
+                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
+                $$('editTaskEmployee').setValue(taskItem.employee_id);
+                $$('editTaskCreateDate').setValue(taskItem.create_date);
+                $$('editTaskFinishDate').setValue(taskItem.finish_date);
+                $$('editTaskPriority').setValue(taskItem.priority);
+                $$('editTaskCompletion').disable();
+                $$('editTaskCompletion').hide();
+                $$('editTaskEdit').hide();
+            }else {
+                editTaskPopEdit.show();
+                $$('editTaskName').setValue(taskItem.name);
+                $$('editTaskText').setValue(taskItem.description);
+                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
+                $$('editTaskEmployee').setValue(taskItem.employee_id);
+                $$('editTaskCreateDate').setValue(taskItem.create_date);
+                $$('editTaskFinishDate').setValue(taskItem.finish_date);
+                $$('editTaskPriority').setValue(taskItem.priority);
+                $$('editTaskCompletion').disable();
+                $$('editTaskCompletion').show();
+                $$('editTaskEdit').show();
+            }
+        });
+    </script>
+</body>
+</html>
