@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/revel/revel"
 	"my-app/app/providers"
+	"my-app/app/routes"
 	"my-app/app/structures"
 )
 
@@ -22,7 +23,23 @@ type TaskController struct {
 	*revel.Controller
 }
 
+
+// проверка существования авторизованного пользователя
+func (c *TaskController) Connected() revel.Result {
+	user, err := c.Session.Get("user")
+	if err != nil {
+		return nil
+	}
+	if user != nil {
+		return c.RenderJSON(user)
+	}
+	return nil
+}
+
 func (c *TaskController) GetAll() revel.Result {
+	if c.Connected() == nil {
+		return c.Redirect(routes.App.Auth())
+	}
 	tasks, err := providers.TaskGetAll()
 	if err != nil{
 		return c.RenderError(err)
@@ -30,7 +47,11 @@ func (c *TaskController) GetAll() revel.Result {
 	return c.RenderJSON(tasks)
 }
 
+// построение дерева задач относительно выбранного проекта
 func (c *TaskController) GetForProject(id structures.TaskTree) revel.Result {
+	if c.Connected() == nil {
+		return c.Redirect(routes.App.Auth())
+	}
 	tasks, err := providers.GetTaskForProject(id)
 	if err != nil{
 		return c.RenderError(err)
@@ -41,13 +62,16 @@ func (c *TaskController) GetForProject(id structures.TaskTree) revel.Result {
 
 		if(tasks[i].ParentTask == 0) {
 			newTreeBuilder = append(newTreeBuilder, tasks[i])
-			addChildTree(tasks, newTreeBuilder, tasks[i].Id)
+			addChildTree(tasks, newTreeBuilder, tasks[i].Id)  // добавляет дочерние задачи для родительской
 		}
 	}
 	return c.RenderJSON(newTreeBuilder)
 }
 
 func (c *TaskController) Create(task structures.Task) revel.Result {
+	if c.Connected() == nil {
+		return c.Redirect(routes.App.Auth())
+	}
 	tasks, err := providers.TaskCreate(task)
 	if err != nil {
 		return c.RenderError(err)
@@ -56,9 +80,24 @@ func (c *TaskController) Create(task structures.Task) revel.Result {
 }
 
 func (c *TaskController) Update(task structures.Task) revel.Result {
+	if c.Connected() == nil {
+		return c.Redirect(routes.App.Auth())
+	}
 	tasks, err := providers.TaskUpdate(task)
 	if err != nil {
 		return c.RenderError(err)
 	}
+	return c.RenderJSON(tasks)
+}
+
+func (c *TaskController) Search(id structures.TaskTree) revel.Result {
+	if c.Connected() == nil {
+		return c.Redirect(routes.App.Auth())
+	}
+	tasks, err := providers.TaskSearch(id)
+	if err != nil{
+		return c.RenderError(err)
+	}
+
 	return c.RenderJSON(tasks)
 }

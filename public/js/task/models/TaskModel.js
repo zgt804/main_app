@@ -18,5 +18,10 @@ const TaskModel = {
     update: (item) => {
         return fetch(`/task`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(item)})
             .then(response => response.json())
+    },
+
+    search: (id) => {
+        return fetch(`/task/search`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({Id: id})})
+            .then(response => response.json())
     }
 }

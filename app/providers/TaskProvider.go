@@ -41,3 +41,12 @@ func TaskUpdate(task structures.Task) ([]*structures.Task, error) {
 	defer db.Close()
 	return mappers.TaskUpdate(db, task)
 }
+
+func TaskSearch(id structures.TaskTree) ([]*structures.Task, error) {
+	db, err := connection.DatabaseConnect()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	return mappers.TaskSearch(db, id)
+}

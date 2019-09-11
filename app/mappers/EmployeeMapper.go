@@ -7,7 +7,7 @@ import (
 	"my-app/app/structures"
 )
 
-// получение всех сотрудников
+
 func EmployeeGetAll(db *sql.DB) ([]*structures.Employee, error) {
 
 	var employees []*structures.Employee
@@ -34,3 +34,28 @@ func EmployeeGetAll(db *sql.DB) ([]*structures.Employee, error) {
 
 	return employees, err
 }
+
+func UserLogin(db *sql.DB, user structures.User) ([]*structures.User, error) {
+
+	var users []*structures.User
+	rows, err := db.Query(`
+		SELECT * FROM users WHERE login=$1 AND pass=$2
+	`, user.Login, user.Pass)
+	if err != nil {
+		return users, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		c := structures.User{}
+		err := rows.Scan(&c.Id, &c.Login, &c.Pass, &c.EmployeeId)
+		if err != nil {
+			return users, err
+		}
+		users = append(users, &c)
+	}
+
+
+	return users, err
+}
+

@@ -7,7 +7,7 @@ import (
 	"my-app/app/structures"
 )
 
-// получение всех сотрудников
+
 func ProjectGetAll(db *sql.DB) ([]*structures.Project, error) {
 
 	var projects []*structures.Project
@@ -54,13 +54,10 @@ func ProjectCreate(db *sql.DB, project structures.Project) ([]*structures.Projec
 }
 
 func ProjectDelete(db *sql.DB, id int) (int, error) {
-
 	_, err := db.Exec(`
 		DELETE FROM project WHERE id = $1
 	`, id)
-	if err != nil {
-		return id, err
-	}
+
 	return id, err
 }
 

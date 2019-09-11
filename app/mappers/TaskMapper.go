@@ -109,7 +109,6 @@ func GetTaskForProject(db *sql.DB, id structures.TaskTree) ([]*structures.Task, 
 	return tasks, err
 }
 
-//добавление нового проекта
 func TaskCreate(db *sql.DB, task structures.Task) ([]*structures.Task, error) {
 	var tasks []*structures.Task
 	c := structures.Task{}
@@ -172,6 +171,57 @@ func TaskUpdate(db *sql.DB, task structures.Task) ([]*structures.Task, error) {
 	c.Worktime = task.Worktime
 	c.FinishDate = task.FinishDate
 	tasks = append(tasks, &c)
+
+	return tasks, err
+}
+
+func TaskDelete(db *sql.DB, id int) (int, error) {
+	_, err := db.Exec(`
+		DELETE FROM task WHERE project_id = $1
+	`, id)
+
+	return id, err
+}
+
+func TaskSearch(db *sql.DB, id structures.TaskTree) ([]*structures.Task, error) {
+
+	var tasks []*structures.Task
+	rows, err := db.Query(`
+		SELECT * FROM task WHERE state=$1 ORDER BY id DESC
+`, id.Id)
+	if err != nil {
+		return tasks, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		c := structures.Task{}
+		employeeIdType := sql.NullInt64{}
+		parentTaskType := sql.NullInt64{}
+		worktimeType := sql.NullInt64{}
+		err := rows.Scan(&c.Id, &c.ProjectId, &employeeIdType, &c.AuthorId, &parentTaskType, &c.CreateDate, &c.FinishDate, &c.Priority, &worktimeType, &c.State, &c.Name, &c.Description)
+		if employeeIdType.Valid {
+			c.EmployeeId = int(employeeIdType.Int64)
+		} else {
+			c.EmployeeId = 0
+		}
+		if parentTaskType.Valid {
+			c.ParentTask = int(parentTaskType.Int64)
+		} else {
+			c.ParentTask = 0
+		}
+		if worktimeType.Valid {
+			c.Worktime = int(worktimeType.Int64)
+		} else {
+			c.Worktime = 0
+		}
+		if err != nil {
+			return tasks, err
+		}
+		tasks = append(tasks, &c)
+	}
+	if err = rows.Err(); err != nil {
+		log.Println(err)
+	}
 
 	return tasks, err
 }

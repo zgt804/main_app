@@ -30,6 +30,7 @@ func ProjectDelete(id int) (int, error) {
 		return id, err
 	}
 	defer db.Close()
+	mappers.TaskDelete(db, id)
 	return mappers.ProjectDelete(db, id)
 }
 

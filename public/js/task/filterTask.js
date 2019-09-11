@@ -5,7 +5,7 @@ function getFilterTask () {
         id: 'filterTask',
         labelWidth: 120,
         value: 1,
-        options: ['назначенные', 'новые', 'в работе', 'завершенные', 'отклоненные'],
-        css: 'mar'
+        options: ['', 'Новая', 'Назначенная', 'В работе', 'Завершенная'],
+        css: 'mar',
     }
 }

@@ -14,3 +14,12 @@ func EmployeeGetAll() ([]*structures.Employee, error) {
 	defer db.Close()
 	return mappers.EmployeeGetAll(db)
 }
+
+func UserLogin(user structures.User) ([]*structures.User, error) {
+	db, err := connection.DatabaseConnect()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	return mappers.UserLogin(db, user)
+}

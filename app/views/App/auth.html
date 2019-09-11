@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authorization</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="./public/codebase/webix.css">
+    <script type="text/javascript" src="./public/codebase/webix.js"></script>
+    <script type="text/javascript" src="./public/js/employee/models/EmployeeModel.js"></script>
+    <script type="text/javascript" src="./public/js/treeRender.js"></script>
+    <link rel="stylesheet" type="text/css" href="./public/css/style.css">
+</head>
+<body>
+<script>
+
+    webix.ui({
+        view: 'window',
+        id: 'loginWindow',
+        modal: true,
+        move: true,
+        head: 'Вход в систему',
+        width: 500,
+        position: 'center',
+        body: {
+            view: 'form',
+            width: 400,
+            elements:[
+                { view: 'text', id: 'login', label: 'Логин', labelWidth: 130},
+                { view: 'text', type: 'password', id: 'password', label: 'Пароль', labelWidth: 130},
+                { view: 'button', id: 'enter', value: 'Войти', css: 'webix_primary', click: logIn}
+            ]
+        }
+    });
+
+    $$('loginWindow').show();
+
+</script>
+</body>
+</html>

@@ -11,14 +11,12 @@
     <script type="text/javascript" src="./public/js/project/editProjectButton.js"></script>
     <script type="text/javascript" src="./public/js/project/deleteProjectButton.js"></script>
     <script type="text/javascript" src="./public/js/project/searchProject.js"></script>
-    <script type="text/javascript" src="./public/js/project/filterProject.js"></script>
     <script type="text/javascript" src="./public/js/project/projects.js"></script>
     <script type="text/javascript" src="./public/js/project/newProjectPop.js"></script>
     <script type="text/javascript" src="./public/js/project/editProjectPop.js"></script>
     <script type="text/javascript" src="./public/js/task/models/TaskModel.js"></script>
     <script type="text/javascript" src="./public/js/task/newTaskButton.js"></script>
     <script type="text/javascript" src="./public/js/task/editTaskButton.js"></script>
-    <script type="text/javascript" src="./public/js/task/searchTask.js"></script>
     <script type="text/javascript" src="./public/js/task/filterTask.js"></script>
     <script type="text/javascript" src="./public/js/task/tasks.js"></script>
     <script type="text/javascript" src="./public/js/task/newTaskPop.js"></script>
@@ -29,12 +27,6 @@
 </head>
 <body>
     <script>
-
-        let task = [];
-
-        let proj = [];
-
-        let newEmployees = [];
 
         webix.ui({
             rows:[
@@ -50,7 +42,6 @@
                                 ]
                             },
                             getSearchProject(),
-                            getFilterProject(),
                             getProjects()
                         ]},
                         {rows:[
@@ -60,7 +51,6 @@
                                     getEditTaskButton()
                                 ]
                             },
-                            getSearchTask(),
                             getFilterTask(),
                             getTasks()
                         ]},
@@ -95,12 +85,14 @@
         let editTaskPopEdit = $$('editTaskPopEdit');
         let editTaskPopConfirm = $$('editTaskPopConfirm');
         let editProjectPop = $$('editProjectPop');
+        let filterTask = $$('filterTask');
 
 
         requestProjects();
         requestEmployees();
+        requestUser();
 
-
+        // строим дерево задач относителльно выбранного проекта, также активируем кнопки редактирования- удаления проекта и добавления задачи
         projectList.attachEvent("onItemClick", function(id) {
             newTaskInputHiddenTask['value'] = 0;
             newTaskInputHiddenProject['value'] = id;
@@ -112,6 +104,7 @@
             buildProjectTree(projectListItem.id);
         });
 
+        // активируем кнопки редактирования при выборе задачи, также добавляет возможность создания дочерней задачи
         taskTree.attachEvent("onItemClick", function(id) {
             taskTree.select(id);
             newTaskInputHiddenTask['value'] = id;
@@ -119,6 +112,7 @@
         });
 
 
+        // закрываем всплывающие окна интерфейса добавления-редактирования-удаления при подтверждении этих операций
         $$('newTaskPopButton').attachEvent("onItemClick", function() {
             newTaskPop.hide();
         });
@@ -147,59 +141,58 @@
             editTaskPopConfirm.hide();
         });
 
+
+        // редактирование задачи
         $$('editTaskButton').attachEvent("onItemClick", function() {
             let taskItem = taskTree.getSelectedItem();
-            let authorId = newEmployees.map(function(x) {return x.id;}).indexOf(taskItem.author_id);
-            if(taskItem.state == 2 && taskItem.employee_id == 1) {
+            let authorId = newEmployees.map(function(x) {return x.id;}).indexOf(taskItem.author_id); // устанавливаем значения автора задачи, т.е. того, кто ее редактирует, находя его id в массиве сотрудников
+            $$('editTaskNameC').setValue(taskItem.name);
+            $$('editTaskTextC').setValue(taskItem.description);
+            $$('editTaskAuthorC').setValue(newEmployees[authorId].value);
+            $$('editTaskEmployeeC').setValue(taskItem.employee_id);
+            $$('editTaskCreateDateC').setValue(taskItem.create_date);
+            $$('editTaskFinishDateC').setValue(taskItem.finish_date);
+            $$('editTaskPriorityC').setValue(taskItem.priority);
+            $$('editTaskName').setValue(taskItem.name);
+            $$('editTaskText').setValue(taskItem.description);
+            $$('editTaskAuthor').setValue(newEmployees[authorId].value);
+            $$('editTaskEmployee').setValue(taskItem.employee_id);
+            $$('editTaskCreateDate').setValue(taskItem.create_date);
+            $$('editTaskFinishDate').setValue(taskItem.finish_date);
+            $$('editTaskPriority').setValue(taskItem.priority);
+            if(taskItem.state == 2 && taskItem.employee_id == userID) { // если задача назначена пользователю
                 editTaskPopConfirm.show();
-                $$('editTaskNameC').setValue(taskItem.name);
-                $$('editTaskTextC').setValue(taskItem.description);
-                $$('editTaskAuthorC').setValue(newEmployees[authorId].value);
-                $$('editTaskEmployeeC').setValue(taskItem.employee_id);
-                $$('editTaskCreateDateC').setValue(taskItem.create_date);
-                $$('editTaskFinishDateC').setValue(taskItem.finish_date);
-                $$('editTaskPriorityC').setValue(taskItem.priority);
                 $$('editTaskCompletion').disable();
             }
-            else if(taskItem.state == 3 && taskItem.employee_id == 1) {
+            else if(taskItem.state == 3 && taskItem.employee_id == userID) { // если задача в работе у пользователя
                 editTaskPopEdit.show();
-                $$('editTaskName').setValue(taskItem.name);
-                $$('editTaskText').setValue(taskItem.description);
-                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
-                $$('editTaskEmployee').setValue(taskItem.employee_id);
-                $$('editTaskCreateDate').setValue(taskItem.create_date);
-                $$('editTaskFinishDate').setValue(taskItem.finish_date);
-                $$('editTaskPriority').setValue(taskItem.priority);
                 $$('editTaskCompletion').enable();
                 $$('editTaskCompletion').show();
                 $$('editTaskEdit').show();
             }
-            else if(taskItem.state == 4) {
+            else if(taskItem.state == 4) { // если задача завершена
                 editTaskPopEdit.show();
-                $$('editTaskName').setValue(taskItem.name);
-                $$('editTaskText').setValue(taskItem.description);
-                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
-                $$('editTaskEmployee').setValue(taskItem.employee_id);
-                $$('editTaskCreateDate').setValue(taskItem.create_date);
-                $$('editTaskFinishDate').setValue(taskItem.finish_date);
-                $$('editTaskPriority').setValue(taskItem.priority);
                 $$('editTaskCompletion').disable();
                 $$('editTaskCompletion').hide();
                 $$('editTaskEdit').hide();
-            }else {
+            } else { // если новая задача
                 editTaskPopEdit.show();
-                $$('editTaskName').setValue(taskItem.name);
-                $$('editTaskText').setValue(taskItem.description);
-                $$('editTaskAuthor').setValue(newEmployees[authorId].value);
-                $$('editTaskEmployee').setValue(taskItem.employee_id);
-                $$('editTaskCreateDate').setValue(taskItem.create_date);
-                $$('editTaskFinishDate').setValue(taskItem.finish_date);
-                $$('editTaskPriority').setValue(taskItem.priority);
                 $$('editTaskCompletion').disable();
                 $$('editTaskCompletion').show();
                 $$('editTaskEdit').show();
             }
         });
+
+        // фильтр задач по статусу
+        filterTask.attachEvent("onChange", function (value) {
+            findState = newState.findIndex(finder => finder == value);
+            if(findState != 0) {
+                filterTree(findState);
+            } else {
+                let projId = Number(newTaskInputHiddenProject['value']);
+                buildProjectTree(projId);
+            }
+        })
     </script>
 </body>
 </html>
