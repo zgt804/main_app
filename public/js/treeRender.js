@@ -305,7 +305,8 @@ function requestProjects () {
 function requestUser () {
     EmployeeModel.getUser().then(function (result) {
         userID = result.employee_id;
-        webix.message(userID);
+        userName = result.login;
+        $$('toolbarUser').setHTML('<p style="color: #FFF; margin-left: 30px; margin-top: 7px; font-size: 20px;">Привет, ' + userName + '!</p>');
     });
 }
 
